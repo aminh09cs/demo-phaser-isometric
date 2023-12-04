@@ -168,7 +168,7 @@ class MainScene extends Phaser.Scene {
       if (!this.ground) return;
       let pos = this.ground.getTileAt(path[index].x, path[index].y);
 
-      let tw = this.tweens.add({
+      this.tweens.add({
         targets: this.player,
         x: pos.pixelX,
         y: pos.pixelY,
@@ -186,6 +186,7 @@ class MainScene extends Phaser.Scene {
     }
   }
   update(time: number, delta: number) {
+    console.log(time);
     this.controls.update(delta);
     const playerTile = this.ground?.getTileAtWorldXY(
       this.player.x + 32,
