@@ -148,6 +148,7 @@ class MainScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
+    console.log(time, delta);
     this.frameTime += 100;
     if (this.frameTime > 100) {
       this.frameTime = 0;
