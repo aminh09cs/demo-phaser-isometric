@@ -29,12 +29,6 @@ class MainScene extends Phaser.Scene {
     y: number;
   } = { x: 1, y: 1 };
 
-  private TARGET_PLAYER_POSITION: {
-    x: number;
-    y: number;
-  } = { x: 1, y: 1 };
-
-  private controls!: Phaser.Cameras.Controls.SmoothedKeyControl;
   private player!: any;
   private easystar!: EasyStar | undefined;
   private map!: Phaser.Tilemaps.Tilemap | undefined;
@@ -44,8 +38,6 @@ class MainScene extends Phaser.Scene {
   private layer3!: Phaser.Tilemaps.TilemapLayer | any;
   private pathStar: any;
   private frameTime: number = 0;
-
-  //Check the link twice if you click it, like you're walking but want to change direction
 
   create() {
     this.anims.create({
@@ -84,21 +76,6 @@ class MainScene extends Phaser.Scene {
     this.layer3?.setDepth(2);
   }
   createCamera() {
-    // let controlConfig = {
-    //   camera: this.cameras.main,
-    //   up: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
-    //   down: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
-    //   left: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
-    //   right: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
-    //   zoomSpeed: 0.005,
-    //   acceleration: 0.02,
-    //   drag: 0.0005,
-    //   maxSpeed: 0.5,
-    // };
-
-    // this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
-    //   controlConfig
-    // );
     this.cameras.main.startFollow(this.player);
   }
 
@@ -150,9 +127,6 @@ class MainScene extends Phaser.Scene {
         this.CURRENT_PLAYER_POSITION,
         this.NEXT_PLAYER_POSITION
       );
-
-      this.TARGET_PLAYER_POSITION.x = groundTiles.x;
-      this.TARGET_PLAYER_POSITION.y = groundTiles.y;
     }
   }
 
@@ -164,41 +138,34 @@ class MainScene extends Phaser.Scene {
       movePos.y,
       (path) => {
         if (path === null) {
-          this.pathStar = path;
+          this.pathStar = null;
         } else {
           this.pathStar = path;
-
-          // this.moveAlongPath(path, 1);
         }
       }
     );
     this.easystar?.calculate();
   }
 
-  moveAlongPath(path: any, index: number) {
-    if (index < path.length) {
-      if (!this.ground) return;
-      let pos = this.ground.getTileAt(path[index].x, path[index].y);
-
-      this.tweens.add({
-        targets: this.player,
-        x: pos.pixelX,
-        y: pos.pixelY,
-        duration: 150,
-        ease: "Linear",
-        onComplete: () => {
-          //To avoid errors need to enable a command input when it is pressed will exit the rule
-          this.CURRENT_PLAYER_POSITION.x = pos.x;
-          this.CURRENT_PLAYER_POSITION.y = pos.y;
-
-          //index = path.length - 1;
-          this.moveAlongPath(path, index + 1);
-        },
-      });
-    }
-  }
   update(time: number, delta: number) {
-    //this.controls.update(delta);
+    this.frameTime += 100;
+    if (this.frameTime > 100) {
+      this.frameTime = 0;
+      if (this.pathStar?.length > 0) {
+        const point = this.pathStar.shift()!;
+        let pos = this.ground.getTileAt(point.x, point.y);
+        //this.player.setPosition(pos.pixelX, pos.pixelY);
+        this.tweens.add({
+          targets: this.player,
+          x: pos.pixelX,
+          y: pos.pixelY,
+          duration: 100,
+          ease: "Linear",
+        });
+        this.CURRENT_PLAYER_POSITION.x = pos.x;
+        this.CURRENT_PLAYER_POSITION.y = pos.y;
+      }
+    }
     const playerTile = this.ground?.getTileAtWorldXY(
       this.player.x + 32,
       this.player.y + 32
@@ -223,24 +190,6 @@ class MainScene extends Phaser.Scene {
     // } else if (layer1Bottom) {
     //   this.player.setDepth(1);
     // }
-    this.frameTime += 100;
-    if (this.frameTime > 100) {
-      this.frameTime = 0;
-      if (this.pathStar?.length > 0) {
-        const point = this.pathStar.shift()!;
-        let pos = this.ground.getTileAt(point.x, point.y);
-        //this.player.setPosition(pos.pixelX, pos.pixelY);
-        this.tweens.add({
-          targets: this.player,
-          x: pos.pixelX,
-          y: pos.pixelY,
-          duration: 100,
-          ease: "Linear",
-        });
-        this.CURRENT_PLAYER_POSITION.x = pos.x;
-        this.CURRENT_PLAYER_POSITION.y = pos.y;
-      }
-    }
   }
   handleInputs() {
     this.input.on(Phaser.Input.Events.POINTER_UP, this.checkMovent, this);
