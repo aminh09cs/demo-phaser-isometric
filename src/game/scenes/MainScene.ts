@@ -152,7 +152,7 @@ class MainScene extends Phaser.Scene {
     if (this.frameTime > 100) {
       this.frameTime = 0;
       if (this.pathStar?.length > 0) {
-        const point = this.pathStar.shift()!;
+        const point = this.pathStar.shift();
         let pos = this.ground.getTileAt(point.x, point.y);
         //this.player.setPosition(pos.pixelX, pos.pixelY);
         this.tweens.add({
@@ -170,26 +170,31 @@ class MainScene extends Phaser.Scene {
       this.player.x + 32,
       this.player.y + 32
     );
+    console.log(playerTile);
 
     if (!playerTile) return;
 
-    // const layer1Left = this.layer1?.getTileAt(playerTile.x - 1, playerTile.y);
-    // const layer1Right = this.layer1?.getTileAt(playerTile.x + 1, playerTile.y);
-    // const layer1Top = this.layer1?.getTileAt(playerTile.x, playerTile.y - 1);
-    // const layer1Bottom = this.layer1?.getTileAt(playerTile.x, playerTile.y + 1);
+    const layer1Left = this.layer1?.getTileAt(playerTile.x - 1, playerTile.y);
+    const layer1Right = this.layer1?.getTileAt(playerTile.x + 1, playerTile.y);
+    const layer1Top = this.layer1?.getTileAt(playerTile.x, playerTile.y - 1);
+    const layer1Bottom = this.layer1?.getTileAt(playerTile.x, playerTile.y + 1);
 
-    // if (layer1Left && layer1Top) {
-    //   console.log("ok");
-    //   this.player.setDepth(3);
-    // } else if (layer1Left) {
-    //   this.player.setDepth(3);
-    // } else if (layer1Right) {
-    //   this.player.setDepth(1);
-    // } else if (layer1Top) {
-    //   this.player.setDepth(2);
-    // } else if (layer1Bottom) {
-    //   this.player.setDepth(1);
-    // }
+    if (layer1Left && layer1Top) {
+      console.log("ok");
+      this.player.setDepth(3);
+    } else if (layer1Top && layer1Right) {
+      this.player.setDepth(1);
+    } else if (layer1Left && layer1Bottom) {
+      this.player.setDepth(1);
+    } else if (layer1Left) {
+      this.player.setDepth(3);
+    } else if (layer1Right) {
+      this.player.setDepth(1);
+    } else if (layer1Top) {
+      this.player.setDepth(2);
+    } else if (layer1Bottom) {
+      this.player.setDepth(1);
+    }
   }
   handleInputs() {
     this.input.on(Phaser.Input.Events.POINTER_UP, this.checkMovent, this);
