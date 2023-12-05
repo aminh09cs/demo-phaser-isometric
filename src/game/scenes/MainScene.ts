@@ -28,6 +28,12 @@ class MainScene extends Phaser.Scene {
     x: number;
     y: number;
   } = { x: 1, y: 1 };
+
+  private TARGET_PLAYER_POSITION: {
+    x: number;
+    y: number;
+  } = { x: 1, y: 1 };
+
   private controls!: Phaser.Cameras.Controls.SmoothedKeyControl;
   private player!: any;
   private easystar!: EasyStar | undefined;
@@ -36,6 +42,10 @@ class MainScene extends Phaser.Scene {
   private layer1!: Phaser.Tilemaps.TilemapLayer | any;
   private layer2!: Phaser.Tilemaps.TilemapLayer | any;
   private layer3!: Phaser.Tilemaps.TilemapLayer | any;
+  private pathStar: any;
+  private frameTime: number = 0;
+
+  //Check the link twice if you click it, like you're walking but want to change direction
 
   create() {
     this.anims.create({
@@ -74,22 +84,22 @@ class MainScene extends Phaser.Scene {
     this.layer3?.setDepth(2);
   }
   createCamera() {
-    let controlConfig = {
-      camera: this.cameras.main,
-      up: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
-      down: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
-      left: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
-      right: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
-      zoomSpeed: 0.005,
-      acceleration: 0.02,
-      drag: 0.0005,
-      maxSpeed: 0.5,
-    };
+    // let controlConfig = {
+    //   camera: this.cameras.main,
+    //   up: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
+    //   down: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
+    //   left: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
+    //   right: this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
+    //   zoomSpeed: 0.005,
+    //   acceleration: 0.02,
+    //   drag: 0.0005,
+    //   maxSpeed: 0.5,
+    // };
 
-    this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
-      controlConfig
-    );
-    // this.cameras.main.startFollow(this.player);
+    // this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(
+    //   controlConfig
+    // );
+    this.cameras.main.startFollow(this.player);
   }
 
   createPlayer() {
@@ -104,7 +114,7 @@ class MainScene extends Phaser.Scene {
         .setScale(2)
         .setOrigin(-0.5, -0.6)
         .play("fly");
-      this.player.setDepth(1);
+      this.player.setDepth(2);
     }
   }
 
@@ -141,8 +151,8 @@ class MainScene extends Phaser.Scene {
         this.NEXT_PLAYER_POSITION
       );
 
-      this.CURRENT_PLAYER_POSITION.x = groundTiles.x;
-      this.CURRENT_PLAYER_POSITION.x = groundTiles.y;
+      this.TARGET_PLAYER_POSITION.x = groundTiles.x;
+      this.TARGET_PLAYER_POSITION.y = groundTiles.y;
     }
   }
 
@@ -154,9 +164,11 @@ class MainScene extends Phaser.Scene {
       movePos.y,
       (path) => {
         if (path === null) {
-          this.moveAlongPath(null, 1);
+          this.pathStar = path;
         } else {
-          this.moveAlongPath(path, 1);
+          this.pathStar = path;
+
+          // this.moveAlongPath(path, 1);
         }
       }
     );
@@ -175,31 +187,25 @@ class MainScene extends Phaser.Scene {
         duration: 150,
         ease: "Linear",
         onComplete: () => {
-          //index = this.pathStar.length - 1;
           //To avoid errors need to enable a command input when it is pressed will exit the rule
           this.CURRENT_PLAYER_POSITION.x = pos.x;
           this.CURRENT_PLAYER_POSITION.y = pos.y;
 
+          //index = path.length - 1;
           this.moveAlongPath(path, index + 1);
         },
       });
     }
   }
   update(time: number, delta: number) {
-    console.log(time);
-    this.controls.update(delta);
+    //this.controls.update(delta);
     const playerTile = this.ground?.getTileAtWorldXY(
       this.player.x + 32,
       this.player.y + 32
     );
 
     if (!playerTile) return;
-    console.log(playerTile);
 
-    this.ground?.setDepth(playerTile.y < this.ground.y ? 1 : 0);
-    this.layer1?.setDepth(playerTile.y < this.layer1.y ? 3 : 2);
-    this.layer2?.setDepth(playerTile.y < this.layer2.y ? 3 : 2);
-    this.layer3?.setDepth(playerTile.y < this.layer3.y ? 3 : 2);
     // const layer1Left = this.layer1?.getTileAt(playerTile.x - 1, playerTile.y);
     // const layer1Right = this.layer1?.getTileAt(playerTile.x + 1, playerTile.y);
     // const layer1Top = this.layer1?.getTileAt(playerTile.x, playerTile.y - 1);
@@ -217,6 +223,24 @@ class MainScene extends Phaser.Scene {
     // } else if (layer1Bottom) {
     //   this.player.setDepth(1);
     // }
+    this.frameTime += 100;
+    if (this.frameTime > 100) {
+      this.frameTime = 0;
+      if (this.pathStar?.length > 0) {
+        const point = this.pathStar.shift()!;
+        let pos = this.ground.getTileAt(point.x, point.y);
+        //this.player.setPosition(pos.pixelX, pos.pixelY);
+        this.tweens.add({
+          targets: this.player,
+          x: pos.pixelX,
+          y: pos.pixelY,
+          duration: 100,
+          ease: "Linear",
+        });
+        this.CURRENT_PLAYER_POSITION.x = pos.x;
+        this.CURRENT_PLAYER_POSITION.y = pos.y;
+      }
+    }
   }
   handleInputs() {
     this.input.on(Phaser.Input.Events.POINTER_UP, this.checkMovent, this);
