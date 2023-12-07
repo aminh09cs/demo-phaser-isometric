@@ -149,18 +149,17 @@ class MainScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     console.log(time, delta);
-    this.frameTime += 100;
-    if (this.frameTime > 100) {
+    this.frameTime += delta;
+    if (this.frameTime > 150) {
       this.frameTime = 0;
       if (this.pathStar?.length > 0) {
         const point = this.pathStar.shift();
         let pos = this.ground.getTileAt(point.x, point.y);
-        //this.player.setPosition(pos.pixelX, pos.pixelY);
         this.tweens.add({
           targets: this.player,
           x: pos.pixelX,
           y: pos.pixelY,
-          duration: 100,
+          duration: 200,
           ease: "Linear",
         });
         this.CURRENT_PLAYER_POSITION.x = pos.x;
@@ -196,6 +195,15 @@ class MainScene extends Phaser.Scene {
     } else if (layer1Bottom) {
       this.player.setDepth(1);
     }
+
+    // this.layer1.forEachTile(function (tile: any) {
+    //   if (tile.x === playerTile.x && tile.y === playerTile.y) {
+    //     this.layer1.bringToTop(layer);
+    //   } else {
+    //     // You can set the depth of the tile individually within the container
+    //     tileContainer.setDepth(tile, 0);
+    //   }
+    // });
   }
   handleInputs() {
     this.input.on(Phaser.Input.Events.POINTER_UP, this.checkMovent, this);
